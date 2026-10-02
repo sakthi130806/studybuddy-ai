@@ -33,9 +33,10 @@ async function callGemini(body, retries = 3) {
 
 // Ask Gemini for JSON and convert it to a JavaScript object
 async function askForJson(prompt) {
-  const response = await callGemini({
-    contents: [{ parts: [{ text: prompt }] }]
-  });
+ const response = await callGemini({
+  contents: [{ parts: [{ text: prompt }] }],
+  generationConfig: { responseMimeType: 'application/json' }
+});
   const data = await response.json();
 
   if (!response.ok) {
