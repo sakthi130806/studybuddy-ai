@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyBuddy AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --surface: #ffffff;
+      --ink: #0f1b2d;
+      --muted: #5b6b80;
+      --line: #dfe5ec;
+      --accent: #0e7c86;
+      --accent-hover: #0a636b;
+      --accent-soft: #e3f3f4;
+      --field: #f9fafc;
+      --ok-bg: #dcf3e6; --ok: #146c3c;
+      --bad-bg: #fbe3e3; --bad: #9b1c1c;
+    }
+    body.dark {
+      --bg: #0d141f;
+      --surface: #151e2c;
+      --ink: #e7edf5;
+      --muted: #93a3b8;
+      --line: #263449;
+      --accent: #2fb5c0;
+      --accent-hover: #4cc8d2;
+      --accent-soft: #163a41;
+      --field: #101927;
+      --ok-bg: #12392a; --ok: #7fe0a8;
+      --bad-bg: #3f1b1f; --bad: #f4a3a3;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      transition: background .2s, color .2s;
+    }
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+    .logo {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--accent); color: #fff;
+      display: grid; place-items: center; font-size: 16px; font-weight: 700;
+    }
+    .icon-btn {
+      background: transparent; color: var(--ink);
+      border: 1px solid var(--line); border-radius: 8px;
+      padding: 7px 14px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+    }
+    .icon-btn:hover { background: var(--accent-soft); }
+    .intro { max-width: 1100px; margin: 0 auto; padding: 36px 24px 8px; }
+    .intro h1 { margin: 0; font-size: 30px; letter-spacing: -0.02em; line-height: 1.2; }
+    .intro p { margin: 8px 0 0; color: var(--muted); max-width: 60ch; }
+    .layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px 24px 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 22px;
+    }
+    .panel h2 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+    .hint { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+    textarea {
+      width: 100%;
+      min-height: 320px;
+      padding: 14px;
+      font: inherit; font-size: 15px;
+      color: var(--ink);
+      background: var(--field);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      resize: vertical;
+      outline: none;
+    }
+    textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .btn {
+      padding: 11px 20px;
+      font: inherit; font-size: 14px; font-weight: 600;
+      border-radius: 8px; cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    body.dark .btn-primary { color: #06262a; }
+    .btn-outline { background: transparent; color: var(--accent); border-color: var(--accent); }
+    .btn-outline:hover { background: var(--accent-soft); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: -6px 0 18px; }
+    .tab {
+      background: none; border: none; font: inherit; font-size: 14px; font-weight: 600;
+      color: var(--muted); padding: 10px 14px; cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .view { display: none; }
+    .view.active { display: block; }
+    .empty { color: var(--muted); font-size: 14px; padding: 8px 0; }
+    .output { white-space: pre-wrap; line-height: 1.75; }
+
+    .question { padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .question:last-of-type { border-bottom: none; }
+    .q-title { font-weight: 600; margin-bottom: 10px; }
+    .option {
+      display: block; width: 100%; text-align: left;
+      padding: 10px 14px; margin-top: 8px;
+      font: inherit; font-size: 14px;
+      color: var(--ink); background: var(--field);
+      border: 1px solid var(--line); border-radius: 8px; cursor: pointer;
+    }
+    .option:hover { border-color: var(--accent); }
+    .option.correct { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
+    .option.wrong { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+    .score {
+      margin-top: 8px; padding: 16px; border-radius: 8px;
+      background: var(--accent-soft); font-weight: 600; text-align: center;
+    }
+    .flashcard {
+  padding: 18px; margin-bottom: 12px; min-height: 70px;
+  background: var(--field); border: 1px solid var(--line);
+  border-radius: 8px; cursor: pointer;
+}
+.flashcard.flipped { background: var(--accent-soft); border-color: var(--accent); }
+.flashcard small { display: block; color: var(--muted); margin-bottom: 6px; }
+.history-row {
+  display: flex; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid var(--line);
+}
+.history-row span:last-child { font-weight: 600; color: var(--accent); }
+.clear-btn { margin-top: 14px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="logo">S</span> StudyBuddy AI</div>
+      <button class="icon-btn" id="themeBtn">Dark mode</button>
+    </div>
+  </div>
+
+  <section class="intro">
+    <h1>Turn your notes into a summary and a quiz</h1>
+    <p>Paste your study material, then get key points or test yourself with five multiple-choice questions.</p>
+  </section>
+
+  <main class="layout">
+    <section class="panel">
+      <h2>Your notes</h2>
+      <p class="hint">Paste text from a chapter, lecture or article.</p>
+      <textarea id="notes" placeholder="Paste your notes here"></textarea>
+      <div class="actions">
+        <button class="btn btn-primary" id="btn">Summarize</button>
+        <button class="btn btn-outline" id="quizBtn">Generate quiz</button>
+        <button class="btn btn-outline" id="cardsBtn">Make flashcards</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="tabs">
+        <button class="tab active" id="tabSummary">Summary</button>
+        <button class="tab" id="tabQuiz">Quiz</button>
+        <button class="tab" id="tabCards">Flashcards</button>
+        <button class="tab" id="tabHistory">History</button>
+      </div>
+      <div class="view active" id="viewSummary">
+        <div id="result" class="output empty">Your summary will appear here.</div>
+      </div>
+      <div class="view" id="viewQuiz">
+        <div id="quiz" class="empty">Your quiz will appear here.</div>
+      </div>
+      <div class="view" id="viewCards">
+  <div id="cards" class="empty">Your flashcards will appear here.</div>
+</div>
+<div class="view" id="viewHistory">
+  <div id="history" class="empty">No quiz attempts yet.</div>
+</div>
+    </section>
+  </main>
+
+  <script>
+    const btn = document.getElementById('btn');
+    const quizBtn = document.getElementById('quizBtn');
+    const notes = document.getElementById('notes');
+    const result = document.getElementById('result');
+    const quizDiv = document.getElementById('quiz');
+    const themeBtn = document.getElementById('themeBtn');
+    const tabSummary = document.getElementById('tabSummary');
+    const tabQuiz = document.getElementById('tabQuiz');
+    const viewSummary = document.getElementById('viewSummary');
+    const viewQuiz = document.getElementById('viewQuiz');
+
+    function showTab(name) {
+  const map = {
+    summary: [tabSummary, viewSummary],
+    quiz: [tabQuiz, viewQuiz],
+    cards: [tabCards, viewCards],
+    history: [tabHistory, viewHistory]
+  };
+  for (const key in map) {
+    map[key][0].classList.toggle('active', key === name);
+    map[key][1].classList.toggle('active', key === name);
+  }
+}
+    tabSummary.onclick = () => showTab('summary');
+    tabQuiz.onclick = () => showTab('quiz');
+
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      themeBtn.textContent = document.body.classList.contains('dark') ? 'Light mode' : 'Dark mode';
+    });
+
+    // Summarize
+    btn.addEventListener('click', async () => {
+      showTab('summary');
+      if (!notes.value.trim()) {
+        result.className = 'output empty';
+        result.textContent = 'Add some notes first.';
+        return;
+      }
+      btn.disabled = true;
+      result.className = 'output empty';
+      result.textContent = 'Summarizing...';
+      try {
+        const res = await fetch('/api/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes: notes.value })
+        });
+        const data = await res.json();
+        if (data.summary) {
+          result.className = 'output';
+          result.textContent = data.summary;
+        } else {
+          result.textContent = 'Error: ' + data.error;
+        }
+      } catch (err) {
+        result.textContent = 'Cannot reach the server. Check that node server.js is running.';
+      }
+      btn.disabled = false;
+    });
+
+    // Quiz
+    quizBtn.addEventListener('click', async () => {
+      showTab('quiz');
+      if (!notes.value.trim()) {
+        quizDiv.className = 'empty';
+        quizDiv.textContent = 'Add some notes first.';
+        return;
+      }
+      quizBtn.disabled = true;
+      quizDiv.className = 'empty';
+      quizDiv.textContent = 'Generating quiz...';
+      try {
+        const res = await fetch('/api/quiz', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes: notes.value })
+        });
+        const data = await res.json();
+        if (!data.quiz) {
+          quizDiv.textContent = 'Error: ' + data.error;
+          quizBtn.disabled = false;
+          return;
+        }
+
+        let score = 0, answered = 0;
+        quizDiv.className = '';
+        quizDiv.innerHTML = '';
+
+        data.quiz.forEach((q, qi) => {
+          const box = document.createElement('div');
+          box.className = 'question';
+          const title = document.createElement('div');
+          title.className = 'q-title';
+          title.textContent = (qi + 1) + '. ' + q.question;
+          box.appendChild(title);
+
+          const buttons = [];
+          q.options.forEach((opt, oi) => {
+            const b = document.createElement('button');
+            b.className = 'option';
+            b.textContent = opt;
+            buttons.push(b);
+            b.onclick = () => {
+              if (box.dataset.done) return;
+              box.dataset.done = 'yes';
+              answered++;
+              if (oi === q.answer) {
+                score++;
+                b.classList.add('correct');
+              } else {
+                b.classList.add('wrong');
+                buttons[q.answer].classList.add('correct');
+              }
+              if (answered === data.quiz.length) {
+                const s = document.createElement('div');
+                s.className = 'score';
+                s.textContent = 'Your score: ' + score + ' out of ' + data.quiz.length;
+                quizDiv.appendChild(s);
+                saveScore(score, data.quiz.length);
+              }
+            };
+            box.appendChild(b);
+          });
+          quizDiv.appendChild(box);
+        });
+      } catch (err) {
+        quizDiv.textContent = 'Cannot reach the server. Check that node server.js is running.';
+      }
+      quizBtn.disabled = false;
+    });
+    const cardsBtn = document.getElementById('cardsBtn');
+const cardsDiv = document.getElementById('cards');
+const tabCards = document.getElementById('tabCards');
+const viewCards = document.getElementById('viewCards');
+tabCards.onclick = () => showTab('cards');
+
+cardsBtn.addEventListener('click', async () => {
+  showTab('cards');
+  if (!notes.value.trim()) {
+    cardsDiv.className = 'empty';
+    cardsDiv.textContent = 'Add some notes first.';
+    return;
+  }
+  cardsBtn.disabled = true;
+  cardsDiv.className = 'empty';
+  cardsDiv.textContent = 'Creating flashcards...';
+  try {
+    const res = await fetch('/api/flashcards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes: notes.value })
+    });
+    const data = await res.json();
+    if (!data.cards) {
+      cardsDiv.textContent = 'Error: ' + data.error;
+      cardsBtn.disabled = false;
+      return;
+    }
+    cardsDiv.className = '';
+    cardsDiv.innerHTML = '';
+    data.cards.forEach((c) => {
+      const el = document.createElement('div');
+      el.className = 'flashcard';
+      el.innerHTML = '<small>Click to flip</small><span></span>';
+      const text = el.querySelector('span');
+      text.textContent = c.front;
+      let showingFront = true;
+      el.onclick = () => {
+        showingFront = !showingFront;
+        text.textContent = showingFront ? c.front : c.back;
+        el.classList.toggle('flipped', !showingFront);
+      };
+      cardsDiv.appendChild(el);
+    });
+  } catch (err) {
+    cardsDiv.textContent = 'Cannot reach the server. Check that node server.js is running.';
+  }
+  cardsBtn.disabled = false;
+});
+const historyDiv = document.getElementById('history');
+const tabHistory = document.getElementById('tabHistory');
+const viewHistory = document.getElementById('viewHistory');
+
+function getHistory() {
+  try {
+    return JSON.parse(localStorage.getItem('quizHistory')) || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveScore(score, total) {
+  const list = getHistory();
+  list.unshift({
+    score: score,
+    total: total,
+    date: new Date().toLocaleString()
+  });
+  localStorage.setItem('quizHistory', JSON.stringify(list.slice(0, 20)));
+}
+
+function renderHistory() {
+  const list = getHistory();
+  if (list.length === 0) {
+    historyDiv.className = 'empty';
+    historyDiv.textContent = 'No quiz attempts yet.';
+    return;
+  }
+  historyDiv.className = '';
+  historyDiv.innerHTML = '';
+  list.forEach((h) => {
+    const row = document.createElement('div');
+    row.className = 'history-row';
+    const d = document.createElement('span');
+    d.textContent = h.date;
+    const s = document.createElement('span');
+    s.textContent = h.score + ' / ' + h.total;
+    row.appendChild(d);
+    row.appendChild(s);
+    historyDiv.appendChild(row);
+  });
+  const clear = document.createElement('button');
+  clear.className = 'btn btn-outline clear-btn';
+  clear.textContent = 'Clear history';
+  clear.onclick = () => {
+    localStorage.removeItem('quizHistory');
+    renderHistory();
+  };
+  historyDiv.appendChild(clear);
+}
+
+tabHistory.onclick = () => {
+  showTab('history');
+  renderHistory();
+};
+  </script>
+</body>
+</html>
