@@ -33,20 +33,26 @@ async function callGemini(body, retries = 3) {
 
 // Ask Gemini for JSON and convert it to a JavaScript object
 async function askForJson(prompt) {
- const response = await callGemini({
-  contents: [{ parts: [{ text: prompt }] }],
-  generationConfig: { responseMimeType: 'application/json' }
-});
+  const response = await callGemini({
+    contents: [{ parts: [{ text: prompt }] }]
+  });
   const data = await response.json();
 
   if (!response.ok) {
-    console.log(data);
+    console.log('GEMINI ERROR:', JSON.stringify(data));
     throw new Error('AI error');
   }
 
-  let text = data.candidates[0].content.parts[0].text;
-  text = text.replace(/```json|```/g, '').trim();
-  return JSON.parse(text);
+  const text = data.candidates[0].content.parts[0].text;
+  console.log('RAW AI TEXT:', text);
+
+  // Take only the part between the first [ and the last ]
+  const start = text.indexOf('[');
+  const end = text.lastIndexOf(']');
+  if (start === -1 || end === -1) {
+    throw new Error('No JSON found');
+  }
+  return JSON.parse(text.slice(start, end + 1));
 }
 
 app.post('/api/summarize', async (req, res) => {
